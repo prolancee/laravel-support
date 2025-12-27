@@ -1,0 +1,205 @@
+<?php
+
+namespace PROLANCEE\Support\App\Repositories;
+
+interface BaseRepositoryInterface
+{
+    /*
+    |---------------------------------------------------------------------------
+    | Register
+    |---------------------------------------------------------------------------
+    | Store new user registration data into the database.
+    | Used to create a user record after pre-validation in the service layer.
+    */
+    public function register(
+        string $table, 
+        array $data, 
+        string $notifier, 
+        string $operation
+    ): array|bool;
+
+    /*
+    |---------------------------------------------------------------------------
+    | Login
+    |---------------------------------------------------------------------------
+    | Retrieve a user record for login validation using provided conditions.
+    | This method fetches the record required to verify login credentials.
+    */
+    public function login(
+        string $table, 
+        string $column, 
+        int|string $unique, 
+        string $password, 
+        string $notifier, 
+        string $operation
+    ): array|bool;
+
+    /*
+    |---------------------------------------------------------------------------
+    | Forgot Password Reset Link
+    |---------------------------------------------------------------------------
+    | Update the password reset token or link associated with the user account.
+    | Commonly used during the "forgot password" flow.
+    */
+    public function passwordResetToken(
+        string $email, 
+        string $notifier, 
+        string $operation
+    ): array|bool;
+
+    /*
+    |---------------------------------------------------------------------------
+    | Change Password
+    |---------------------------------------------------------------------------
+    | Update the password of an authenticated user using matching conditions.
+    | Supports conditional updates such as checking old password, status, etc.
+    */
+    public function changePassword(
+        string $table, 
+        string $column, 
+        int|string $unique, 
+        string $password, 
+        string $token, 
+        string $notifier, 
+        string $operation
+    ): array|bool;
+
+    /*
+    |---------------------------------------------------------------------------
+    | Logout
+    |---------------------------------------------------------------------------
+    | Invalidate user authentication by removing or clearing stored login data.
+    | Example: deleting session records, tokens, or device bindings.
+    */
+    public function logout(
+        string $table, 
+        string $column, 
+        int|string $unique, 
+        string $notifier, 
+        string $operation
+    ): array|bool;
+
+    /*
+    |---------------------------------------------------------------------------
+    | Store Methods
+    |---------------------------------------------------------------------------
+    | Create or insert records into the database
+    */
+    public function storeSingle(
+        string $table, 
+        array $data, 
+        string $notifier, 
+        string $operation
+    ): array|bool;
+
+    /*
+    |---------------------------------------------------------------------------
+    | Store Bulk Methods
+    |---------------------------------------------------------------------------
+    | Create or insert bulk records into the database
+    */
+    public function storeBulk(
+        array $table, 
+        array $data, 
+        string $notifier, 
+        string $operation
+    ): array|bool;
+
+    /*
+    |---------------------------------------------------------------------------
+    | Fetch Single Methods
+    |---------------------------------------------------------------------------
+    | Fetch a single record based on a condition
+    */
+    public function fetchSingle(
+        string $table, 
+        string $column, 
+        int|string $unique, 
+        string $notifier, 
+        string $operation
+    ): array|bool;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fetch Builder Methods
+    |--------------------------------------------------------------------------
+    | Fetch Builder records with optional sorting and pagination
+    */
+    public function fetchBuilder(
+        string $table,
+        array $select,
+        array $joins,
+        array $where,
+        array $orWhere,
+        array $whereRow,
+        array $between,
+        array $notBetween,
+        array $in,
+        array $notIn,
+        array $like,
+        array $notLike,
+        array $orderBy,
+        int $offset,
+        int|string $limit,
+        string $notifier, 
+        string $operation
+    ): array|bool;
+
+    /*
+    |---------------------------------------------------------------------------
+    | Update Methods
+    |---------------------------------------------------------------------------
+    | Update existing records in the database
+    */
+    public function updateSingle(
+        string $table, 
+        string $column, 
+        int|string $unique, 
+        array $data, 
+        string $notifier, 
+        string $operation
+    ): array|bool;
+
+    /*
+    |---------------------------------------------------------------------------
+    | Update Bulk Methods
+    |---------------------------------------------------------------------------
+    | Update bulk records in the database
+    */
+    public function updateBulk(
+        array $table, 
+        array $column, 
+        array $unique, 
+        array $data, 
+        string $notifier, 
+        string $operation
+    ): array|bool;
+
+    /*
+    |---------------------------------------------------------------------------
+    | Delete Methods
+    |---------------------------------------------------------------------------
+    | Delete a single record from the database
+    */
+    public function deleteSingle(
+        string $table, 
+        string $column, 
+        int|string $unique, 
+        string $notifier, 
+        string $operation
+    ): array|bool;
+
+    /*
+    |---------------------------------------------------------------------------
+    | Delete Bulk Methods
+    |---------------------------------------------------------------------------
+    | Delete bulk records from the database
+    */
+    public function deleteBulk(
+        array $table, 
+        array $column, 
+        array $unique, 
+        string $notifier, 
+        string $operation
+    ): array|bool;
+}
