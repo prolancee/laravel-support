@@ -1,0 +1,28 @@
+{
+    "name": "prolancee/support",
+    "description": "Shared support utilities for Prolancee Laravel packages",
+    "type": "library",
+    "license": "MIT",
+
+    "require": {
+        "php": "^8.1",
+        "laravel/framework": "^10.0"
+    },
+
+    "autoload": {
+        "psr-4": {
+            "PROLANCEE\\Support\\": "src/"
+        }
+    },
+
+    "extra": {
+        "branch-alias": {
+            "dev-10.x": "10.x-dev"
+        },
+        "laravel": {
+            "providers": [
+                "PROLANCEE\\Support\\Providers\\AppServiceProvider"
+            ]
+        }
+    }
+}
