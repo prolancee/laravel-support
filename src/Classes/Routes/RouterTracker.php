@@ -3,6 +3,7 @@
 namespace PROLANCEE\Support\Classes\Routes;
 
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Request;
 
 final class RouterTracker
 {
@@ -70,7 +71,7 @@ final class RouterTracker
      */
     public static function getRoutes(string $request_method = null, string $prefix = null): array
     {
-        if (!Storage::exists(self::FILE_PATH_ROUTES)) {
+        if (! Storage::exists(self::FILE_PATH_ROUTES)) {
             return [];
         }
 
@@ -123,39 +124,33 @@ final class RouterTracker
     }
 
     /**
-     * Parse the current request URI and extract the module name
-     * (e.g., blade/sanctum/admotum) and the endpoint (last two segments),
-     * returns null if not enough URI segments.
+     * Parse URI → detect module → resolve CRUD endpoint.
      *
-     * @return array
+     * @return array|null
      */
-    public static function getFromUri(): ?array
+    public static function getFromUri(Request $request = null): ?array
     {
-        $requestPath = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
-        $segments = explode('/', $requestPath);
-        $count = count($segments);
-        
-        $action = $segments[$count - 2] ?? null;
-        $scope  = $segments[$count - 1] ?? null;
+        $request ??= request();
 
-        if (!$action || !$scope) {
+        $segments = $request->segments();
+        $count    = count($segments);
+
+        if ($count < 2) {
             return null;
         }
 
-        $modules = ['blade', 'admotum', 'sanctum'];
-        $module = null;
-        for ($i = 3; $i <= 6; $i++) {
-            $index = $count - $i;
-            if ($index >= 0 && in_array($segments[$index], $modules)) {
-                $module = $segments[$index];
-                break;
-            }
-        }
+        $action = $segments[$count - 2];
+        $scope  = $segments[$count - 1];
+
+        $modules = ['ajax', 'admotum', 'sanctum'];
+        $module  = collect($segments)
+            ->intersect($modules)
+            ->first();
 
         return [
-            'requestPath' => $requestPath,
+            'requestPath' => '/' . implode('/', $segments),
             'module'      => $module,
-            'endpoint'    => $action . '/' . $scope
+            'endpoint'    => $action . '/' . $scope,
         ];
     }
 }
