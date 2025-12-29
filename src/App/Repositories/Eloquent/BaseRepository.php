@@ -5,8 +5,7 @@ namespace PROLANCEE\Support\App\Repositories\Eloquent;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException as LaravelQueryException;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\{DB, Hash, Session};
 use Illuminate\Support\Str;
 use PROLANCEE\Support\App\Models\EloquentModel;
 use PROLANCEE\Support\App\Repositories\BaseRepositoryInterface;
@@ -35,7 +34,7 @@ class BaseRepository extends BaseHelperRepositry implements BaseRepositoryInterf
         array $data,
         string $notifier,
         string $operation
-    ): array | bool {
+    ): array|bool {
         DB::beginTransaction();
 
         try {
@@ -46,36 +45,50 @@ class BaseRepository extends BaseHelperRepositry implements BaseRepositoryInterf
                 DB::rollBack();
                 return false;
             }
+
             $this->model->setTable($table);
             $this->model->fillable = array_keys($data);
 
             if (isset($data['password'])) {
                 $data['password'] = Hash::make($data['password']);
             }
-            $this->applyCreatedAt($table, $data);
-            $id = $this->model->insertGetId($data);
 
+            $this->applyCreatedAt($table, $data);
+
+            $id = $this->model->insertGetId($data);
             if (! $id) {
                 DB::rollBack();
                 return false;
             }
-            $user = $this->model->newQuery()
-                ->whereKey($id)
-                ->first();
 
+            $user = $this->model->newQuery()->whereKey($id)->first();
             if (! $user) {
                 DB::rollBack();
                 return false;
             }
             $module = $this->fromUri['module'] ?? null;
 
-            $token = ($module === 'sanctum' && method_exists($user, 'createToken'))
-                ? $user->createToken('api_token')->plainTextToken
-                : null;
+            $token            = null;
+            $tokenInfo        = null;
+            $ajaxSessionData  = null;
 
-            $tokenInfo = ($module === 'admotum')
-                ? 'Generate token at: admotum/generate/access-token'
-                : null;
+            if ($module === 'sanctum' && method_exists($user, 'createToken')) {
+                $token = $user->createToken('api_token')->plainTextToken;
+            }
+            if ($module === 'admotum') {
+                $tokenInfo = 'Generate token at: admotum/generate/access-token';
+            }
+
+            if ($module === 'ajax') {
+                Session::regenerate(); 
+
+                $ajaxSessionData = [
+                    'user_id'    => $user->getKey(),
+                    'token_info' => 'Session based authentication (AJAX)',
+                ];
+
+                Session::put($ajaxSessionData);
+            }
 
             DB::commit();
 
@@ -83,8 +96,14 @@ class BaseRepository extends BaseHelperRepositry implements BaseRepositoryInterf
                 'token'      => $token,
                 'token_info' => $tokenInfo,
                 'row'        => $user->toArray(),
+                'session'    => $ajaxSessionData,
             ];
-            $notified = $this->buildAndNotifier($operation, $results, $notifier);
+
+            $notified = $this->buildAndNotifier(
+                $operation,
+                $results,
+                $notifier
+            );
 
             return [
                 'data'     => $results,
@@ -107,11 +126,11 @@ class BaseRepository extends BaseHelperRepositry implements BaseRepositoryInterf
     public function login(
         string $table,
         string $column,
-        int | string $unique,
+        int|string $unique,
         string $password,
         string $notifier,
         string $operation
-    ): array | bool {
+    ): array|bool {
 
         try {
             if (
@@ -122,12 +141,10 @@ class BaseRepository extends BaseHelperRepositry implements BaseRepositoryInterf
             ) {
                 return false;
             }
+
             $this->model->setTable($table);
 
-            $user = $this->model->newQuery()
-                ->where($column, $unique)
-                ->first();
-
+            $user = $this->model->newQuery()->where($column, $unique)->first();
             if (! $user) {
                 return [
                     'auth' => 'user-not-found',
@@ -139,26 +156,45 @@ class BaseRepository extends BaseHelperRepositry implements BaseRepositoryInterf
                     'auth' => 'invalid-credentials',
                 ];
             }
+
             $module = $this->fromUri['module'] ?? null;
+
+            $token           = null;
+            $tokenInfo       = null;
+            $ajaxSessionData = null;
 
             if ($module === 'sanctum' && method_exists($user, 'tokens')) {
                 $user->tokens()->delete();
+                $token = $user->createToken('api_token')->plainTextToken;
             }
 
-            $token = $module === 'sanctum'
-                ? $user->createToken('api_token')->plainTextToken
-                : null;
+            if ($module === 'admotum') {
+                $tokenInfo = 'Generate token at: admotum/generate/access-token';
+            }
 
-            $tokenInfo = $module === 'admotum'
-                ? 'Generate token at: admotum/generate/access-token'
-                : null;
+            if ($module === 'ajax') {
+                Session::regenerate();
+
+                $ajaxSessionData = [
+                    'user_id'    => $user->getKey(),
+                    'token_info' => 'Session based authentication (AJAX)',
+                ];
+
+                Session::put($ajaxSessionData);
+            }
 
             $results = [
                 'token'      => $token,
                 'token_info' => $tokenInfo,
                 'row'        => $user->toArray(),
+                'session'    => $ajaxSessionData,
             ];
-            $notified = $this->buildAndNotifier($operation, $results, $notifier);
+
+            $notified = $this->buildAndNotifier(
+                $operation,
+                $results,
+                $notifier
+            );
 
             return [
                 'data'     => $results,
