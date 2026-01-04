@@ -2,7 +2,7 @@
 
 namespace App\Http\Prolancee\Classes;
 
-use PROLANCEE\Support\Classes\Fetcher;
+use PROLANCEE\Support\Classes\IO\Fetcher;
 use Illuminate\Support\Facades\DB;
 
 final class Renderable

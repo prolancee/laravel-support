@@ -52,7 +52,7 @@ class MakeRender extends Command
 
 namespace {{namespace}};
 
-use PROLANCEE\Support\Classes\Fetcher;
+use PROLANCEE\Support\Classes\IO\Fetcher;
 use Illuminate\Support\Facades\DB;
 
 class {{class}}
